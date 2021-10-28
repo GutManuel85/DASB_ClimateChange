@@ -5,10 +5,13 @@ library(shiny)
 dataset <- read_csv("MyCleanedGlobalLandTemperaturesByCountry.csv")
 countries <- unique(dataset$Country)
 dataset$dt <- format(dataset$dt, format = "%Y")
-dataset <- subset(dataset, select = c(dt, AverageTemperature, Country))
-dataset <- group_by(dataset, dt, Country) %>% summarize(AverageTemperature = mean(AverageTemperature))
+dataset_source <- subset(dataset, select = c(dt, AverageTemperature, Country))
+dataset <- group_by(dataset_source, dt, Country) %>% summarize(AverageTemperature = mean(AverageTemperature))
+dataset_without_na <- dataset[!is.na(dataset$AverageTemperature),]
+dataset_world_wide <- group_by(dataset_without_na, dt) %>% summarize(AverageTemperature = mean(AverageTemperature))
 dates <- as.numeric(as.character(dataset$dt))
 View(dataset)
+View(dataset_world_wide)
 
 min_date <- min(dates)
 min_date
@@ -27,10 +30,11 @@ ui <- fluidPage(
               max = max_date, sep = ""),
   sliderInput(inputId = "max_date", label = "Choose end date", value = max_date, min = min_date, 
               max = max_date, sep = ""),
-  selectInput(inputId = "country1", label = "Choose country 1", choices = countries, selected = "Switzerland"),
+  selectInput(inputId = "country1", label = "Choose country 1", choices = countries, selected = "Greenland"),
   selectInput(inputId = "country2", label = "Choose country 2", choices = countries, selected = "Ecuador"),
   plotOutput("line1"),
-  plotOutput("line2")
+  plotOutput("line2"),
+  plotOutput("line3")
 
 )
 
@@ -38,21 +42,33 @@ server <- function(input, output, session) {
   output$line1 <- renderPlot({
     title <- paste("Average annual temperature in", input$country1)
     plot(dataset$dt[dataset$Country == input$country1 &
-                      dataset$dt >= input$min_date & dataset$dt <= input$max_date],
+                      dataset$dt > input$min_date & dataset$dt < input$max_date],
          dataset$AverageTemperature[dataset$Country == input$country1 &
-                                      dataset$dt >= input$min_date & dataset$dt <= input$max_date],
+                                      dataset$dt > input$min_date & dataset$dt < input$max_date],
          type="l", lwd=5, lty=3, col="red", main = title,
          ylab="degrees", xlab="year")
+    abline(lm(dataset$dt[dataset$Country == input$country1 &
+                           dataset$dt > input$min_date & dataset$dt < input$max_date]~
+              dataset$AverageTemperature[dataset$Country == input$country1 &
+                                           dataset$dt > input$min_date & dataset$dt < input$max_date]))
   })   
     output$line2 <- renderPlot({
     title <- paste("Average annual temperature in", input$country2)
     plot(dataset$dt[dataset$Country == input$country2 &
-                      dataset$dt >= input$min_date & dataset$dt <= input$max_date],
+                      dataset$dt > input$min_date & dataset$dt < input$max_date],
          dataset$AverageTemperature[dataset$Country == input$country2 &
-                                      dataset$dt >= input$min_date & dataset$dt <= input$max_date],
+                                      dataset$dt > input$min_date & dataset$dt < input$max_date],
          type="l", lwd=5, lty=3, col="green", main = title,
          ylab="degrees", xlab="year")
   })
+    output$line3 <- renderPlot({
+      title <- paste("Average annual temperature world wide")
+      plot(dataset_world_wide$dt[dataset_world_wide$dt > input$min_date & dataset_world_wide$dt < input$max_date],
+           dataset_world_wide$AverageTemperature[dataset_world_wide$dt > input$min_date & dataset_world_wide$dt < input$max_date],
+           type="l", lwd=5, lty=3, col="blue", main = title,
+           ylab="degrees", xlab="year")
+    })
+    
 }
 
 shinyApp(ui, server)
