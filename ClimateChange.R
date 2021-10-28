@@ -23,12 +23,12 @@ ui <- fluidPage(
     zoom: 60%; /* Webkit browsers */
 }
               "),
-  sliderInput(inputId = "min_date", label = "Choose start date", value = 1850, min = min_date, 
+  sliderInput(inputId = "min_date", label = "Start date", value = 1850, min = min_date, 
               max = max_date, sep = ""),
-  sliderInput(inputId = "max_date", label = "Choose end date", value = max_date, min = min_date, 
+  sliderInput(inputId = "max_date", label = "End date", value = max_date, min = min_date, 
               max = max_date, sep = ""),
-  selectInput(inputId = "country1", label = "Choose country 1", choices = countries, selected = "Switzerland"),
-  selectInput(inputId = "country2", label = "Choose country 2", choices = countries, selected = "Ecuador"),
+  selectInput(inputId = "country1", label = "Country 1", choices = countries, selected = "Switzerland"),
+  selectInput(inputId = "country2", label = "Country 2", choices = countries, selected = "Ecuador"),
   plotOutput("line1"),
   plotOutput("line2")
 
